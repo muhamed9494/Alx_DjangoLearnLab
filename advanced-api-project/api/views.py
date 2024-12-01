@@ -1,7 +1,7 @@
-from rest_framework import generics  # Corrected import for generics
+from rest_framework import generics  # Importing generics for the class-based views
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
-from django_filters.rest_framework import DjangoFilterBackend  # Corrected import for django_filters
-from rest_framework.filters import SearchFilter, OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend  # Corrected import for filtering
+from rest_framework.filters import SearchFilter, OrderingFilter  # Importing filters for search and ordering
 from .models import Book
 from .serializers import BookSerializer
 
