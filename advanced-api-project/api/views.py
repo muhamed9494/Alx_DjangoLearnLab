@@ -1,23 +1,31 @@
 # api/views.py
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-# Import permission classes
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticatedOrReadOnly  # Keep this for permissions
+from rest_framework.filters import BaseFilterBackend, SearchFilter, OrderingFilter
+from django_filters import rest_framework as filters
 from .models import Book
 from .serializers import BookSerializer
 
+# Define a filter for the Book model
+class BookFilter(filters.FilterSet):
+    title = filters.CharFilter(lookup_expr='icontains')  # Filter by title (case-insensitive)
+    author = filters.CharFilter(lookup_expr='icontains')  # Filter by author (case-insensitive)
+    publication_year = filters.NumberFilter()  # Filter by publication year
 
-# View to list all books (read-only access for unauthenticated users)
-class BookListView(APIView):
-    # Apply the IsAuthenticatedOrReadOnly permission to allow read-only for unauthenticated users
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    class Meta:
+        model = Book
+        fields = ['title', 'author', 'publication_year']
 
-    def get(self, request, *args, **kwargs):
-        books = Book.objects.all()
-        serializer = BookSerializer(books, many=True)
-        return Response(serializer.data)
-
+# List View for books with filtering, searching, and ordering capability
+class BookListView(generics.ListAPIView):
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    filter_backends = (DjangoFilterBackend, SearchFilter, OrderingFilter)  # Use DjangoFilter, SearchFilter, and OrderingFilter
+    filterset_class = BookFilter  # Assign the filter class
+    search_fields = ['title', 'author']  # Enable search on title and author
+    ordering_fields = ['title', 'publication_year']  # Allow ordering by title and publication_year
+    ordering = ['title']  # Default ordering by title
+    permission_classes = [IsAuthenticatedOrReadOnly]  # Apply permission class
 
 # View to retrieve a single book by ID
 class BookDetailView(APIView):
