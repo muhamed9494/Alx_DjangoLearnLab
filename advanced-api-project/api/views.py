@@ -1,57 +1,111 @@
-from rest_framework import generics  # Importing generics for the class-based views
+# api/views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+# Import permission classes
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
-from django_filters.rest_framework import DjangoFilterBackend  # Corrected import for filtering
-from rest_framework.filters import SearchFilter, OrderingFilter  # Importing filters for search and ordering
 from .models import Book
 from .serializers import BookSerializer
-from django_filters import rest_framework
+from rest_framework import generics
+from django_filters import rest_framework as filters
+from rest_framework.filters import OrderingFilter
+from rest_framework.filters import SearchFilter
+from django_filters import rest_framework as django_filters
 
-# Book List View with filtering, searching, and ordering capabilities
+
+
+class BookFilter(filters.FilterSet):
+    title = filters.CharFilter(lookup_expr='icontains')
+    author = filters.CharFilter(field_name='author__name', lookup_expr='icontains')
+    publication_year = filters.NumberFilter()
+
+    class Meta:
+        model = Book
+        fields = ['title', 'author', 'publication_year']
+
+
+# View to list all books (read-only access for unauthenticated users)
 class BookListView(generics.ListAPIView):
-    """
-    API View to list all books with filtering, searching, and ordering.
-
-    Query Parameters:
-    - title: Filter by book title.
-    - author__name: Filter by author's name.
-    - publication_year: Filter by year of publication.
-    - search: Search by title or author's name.
-    - ordering: Order by title or publication year (default is title, use - for descending order).
-
-    Example Requests:
-    - /api/books/?title=python    # Filters books with 'python' in the title.
-    - /api/books/?search=python   # Search books with 'python' in the title or author's name.
-    - /api/books/?ordering=-title # Order books by title in descending order.
-    """
-    queryset = Book.objects.all()  # All book objects
-    serializer_class = BookSerializer  # Serializer used to convert query results to JSON format
-
-    # Set up the backends for filtering, searching, and ordering
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    
-    # Fields that can be used for filtering
-    filterset_fields = ['title', 'author__name', 'publication_year']
-    
-    # Fields that can be searched
+    # Apply the IsAuthenticatedOrReadOnly permission to allow read-only for unauthenticated users
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    filter_backends = (django_filters.DjangoFilterBackend, SearchFilter, OrderingFilter)  # SearchFilter from DRF
+    filterset_class = BookFilter
     search_fields = ['title', 'author__name']
-    
-    # Fields that can be used for ordering
     ordering_fields = ['title', 'publication_year']
-    
-    # Default ordering by title
-    ordering = ['title']
+    ordering = ['title']  # Default ordering
 
-    # Permissions - allow read-only access, but authentication required for changes
+    def get(self, request, *args, **kwargs):
+        books = Book.objects.all()
+        serializer = BookSerializer(books, many=True)
+        return Response(serializer.data)
+
+
+# View to retrieve a single book by ID
+class BookDetailView(APIView):
+    # Apply the IsAuthenticatedOrReadOnly permission to allow read-only for unauthenticated users
     permission_classes = [IsAuthenticatedOrReadOnly]
 
-# Book Create View to add new books (only accessible to authenticated users)
-class BookCreateView(generics.CreateAPIView):
-    queryset = Book.objects.all()
-    serializer_class = BookSerializer
-    permission_classes = [IsAuthenticated]  # Only authenticated users can add books
+    def get(self, request, *args, **kwargs):
+        try:
+            book = Book.objects.get(pk=kwargs['pk'])
+        except Book.DoesNotExist:
+            return Response({"detail": "Book not found."}, status=status.HTTP_404_NOT_FOUND)
 
-# Book Detail View for retrieving, updating, or deleting a book
-class BookDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Book.objects.all()
-    serializer_class = BookSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]  # Auth required for update/delete
+        serializer = BookSerializer(book)
+        return Response(serializer.data)
+
+
+# View to create a new book (requires authentication)
+class BookCreateView(APIView):
+    # Apply the IsAuthenticated permission to require authentication for creating a book
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = BookSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# View to update an existing book (requires authentication)
+class BookUpdateView(APIView):
+    # Apply the IsAuthenticated permission to require authentication for updating a book
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, *args, **kwargs):
+        book_id = request.data.get('id')  # Get the book ID from the request data
+        if not book_id:
+            return Response({"detail": "Book ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            book = Book.objects.get(pk=book_id)
+        except Book.DoesNotExist:
+            return Response({"detail": "Book not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = BookSerializer(book, data=request.data, partial=True)  # partial=True allows partial updates
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# View to delete a book (requires authentication)
+class BookDeleteView(APIView):
+    # Apply the IsAuthenticated permission to require authentication for deleting a book
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        book_id = request.data.get('id')  # Get the book ID from the request data
+        if not book_id:
+            return Response({"detail": "Book ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            book = Book.objects.get(pk=book_id)
+        except Book.DoesNotExist:
+            return Response({"detail": "Book not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        book.delete()
+        return Response({"detail": "Book deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
