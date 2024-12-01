@@ -12,7 +12,8 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
 from django_filters import rest_framework as django_filters
 
-
+filters.OrderingFilter = OrderingFilter
+filters.SearchFilter = SearchFilter
 
 class BookFilter(filters.FilterSet):
     title = filters.CharFilter(lookup_expr='icontains')
@@ -30,7 +31,7 @@ class BookListView(generics.ListAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    filter_backends = (django_filters.DjangoFilterBackend, SearchFilter, OrderingFilter)  # SearchFilter from DRF
+    filter_backends = (django_filters.DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)  # SearchFilter from DRF
     filterset_class = BookFilter
     search_fields = ['title', 'author__name']
     ordering_fields = ['title', 'publication_year']
