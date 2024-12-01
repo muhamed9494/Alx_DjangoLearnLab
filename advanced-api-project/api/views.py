@@ -1,13 +1,17 @@
+# api/views.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+# Import permission classes
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from .models import Book
 from .serializers import BookSerializer
 
+
 # View to list all books (read-only access for unauthenticated users)
 class BookListView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]  # Allows read-only access to unauthenticated users
+    # Apply the IsAuthenticatedOrReadOnly permission to allow read-only for unauthenticated users
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request, *args, **kwargs):
         books = Book.objects.all()
@@ -17,7 +21,8 @@ class BookListView(APIView):
 
 # View to retrieve a single book by ID
 class BookDetailView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]  # Allows read-only access to unauthenticated users
+    # Apply the IsAuthenticatedOrReadOnly permission to allow read-only for unauthenticated users
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request, *args, **kwargs):
         try:
@@ -31,7 +36,8 @@ class BookDetailView(APIView):
 
 # View to create a new book (requires authentication)
 class BookCreateView(APIView):
-    permission_classes = [IsAuthenticated]  # Requires authentication
+    # Apply the IsAuthenticated permission to require authentication for creating a book
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         serializer = BookSerializer(data=request.data)
@@ -43,7 +49,8 @@ class BookCreateView(APIView):
 
 # View to update an existing book (requires authentication)
 class BookUpdateView(APIView):
-    permission_classes = [IsAuthenticated]  # Requires authentication
+    # Apply the IsAuthenticated permission to require authentication for updating a book
+    permission_classes = [IsAuthenticated]
 
     def put(self, request, *args, **kwargs):
         book_id = request.data.get('id')  # Get the book ID from the request data
@@ -64,7 +71,8 @@ class BookUpdateView(APIView):
 
 # View to delete a book (requires authentication)
 class BookDeleteView(APIView):
-    permission_classes = [IsAuthenticated]  # Requires authentication
+    # Apply the IsAuthenticated permission to require authentication for deleting a book
+    permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
         book_id = request.data.get('id')  # Get the book ID from the request data
