@@ -15,27 +15,47 @@ from django_filters import rest_framework as django_filters
 filters.OrderingFilter = OrderingFilter
 filters.SearchFilter = SearchFilter
 
+# Filter class for Book model
 class BookFilter(filters.FilterSet):
-    title = filters.CharFilter(lookup_expr='icontains')
-    author = filters.CharFilter(field_name='author__name', lookup_expr='icontains')
-    publication_year = filters.NumberFilter()
+    """
+    Filters for the Book model. The following fields can be used for filtering:
+    - title: case-insensitive search for book titles.
+    - author: case-insensitive search for author names.
+    - publication_year: filter by the year of publication.
+    """
+    title = filters.CharFilter(lookup_expr='icontains') # Filter books by title (case-insensitive)
+    author = filters.CharFilter(field_name='author__name', lookup_expr='icontains') # Filter books by author's name
+    publication_year = filters.NumberFilter() # Filter books by publication year
 
     class Meta:
         model = Book
-        fields = ['title', 'author', 'publication_year']
+        fields = ['title', 'author', 'publication_year'] # Fields that can be filtered  
 
 
-# View to list all books (read-only access for unauthenticated users)
+# View class for listing books with filtering, searching, and ordering
 class BookListView(generics.ListAPIView):
-    # Apply the IsAuthenticatedOrReadOnly permission to allow read-only for unauthenticated users
+    
+    #List view for the Book model, providing the following features:
+    #- Filtering: Allows filtering by title, author, and publication year.
+    #- Searching: Allows searching by title and author name.
+    #- Ordering: Allows ordering the books by title or publication year.
+    
     permission_classes = [IsAuthenticatedOrReadOnly]
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     filter_backends = (django_filters.DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)  # SearchFilter from DRF
-    filterset_class = BookFilter
-    search_fields = ['title', 'author__name']
-    ordering_fields = ['title', 'publication_year']
-    ordering = ['title']  # Default ordering
+    filterset_class = BookFilter # Use the BookFilter class for filtering
+    search_fields = ['title', 'author__name'] # Fields that can be searched
+    ordering_fields = ['title', 'publication_year'] # Fields that can be used for ordering
+    ordering = ['title']  # Default ordering by title (ascending)
+
+    # Documentation for API behavior:
+    # - Filtering can be done by providing query parameters such as:
+    #     - `title=<book_title>`: Filter by title.
+    #     - `author=<author_name>`: Filter by author's name.
+    #     - `publication_year=<year>`: Filter by year of publication.
+    # - Searching is possible using the `search` query parameter for the fields defined in `search_fields`.
+    # - Ordering can be controlled with the `ordering` query parameter for fields listed in `ordering_fields`.
 
     def get(self, request, *args, **kwargs):
         books = Book.objects.all()
