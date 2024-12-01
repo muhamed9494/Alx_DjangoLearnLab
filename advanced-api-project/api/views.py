@@ -1,39 +1,49 @@
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from .models import Book
 from .serializers import BookSerializer
 
-class BookListView(generics.ListAPIView):
-    """
-    List all books.
-    - No authentication required.
-    """
-    queryset = Book.objects.all()
-    serializer_class = BookSerializer
+# View to list all books (read-only access for unauthenticated users)
+class BookListView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]  # Allows read-only access to unauthenticated users
 
-class BookDetailView(generics.RetrieveAPIView):
-    """
-    Retrieve a single book by its ID.
-    """
-    queryset = Book.objects.all()
-    serializer_class = BookSerializer
-    lookup_field = 'pk'  # Specify that the primary key (ID) will be used in the URL
+    def get(self, request, *args, **kwargs):
+        books = Book.objects.all()
+        serializer = BookSerializer(books, many=True)
+        return Response(serializer.data)
 
-class BookCreateView(generics.CreateAPIView):
-    """
-    Create a new book.
-    """
-    queryset = Book.objects.all()
-    serializer_class = BookSerializer
-    permission_classes = [IsAuthenticated]  # Restrict to authenticated users
 
+# View to retrieve a single book by ID
+class BookDetailView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]  # Allows read-only access to unauthenticated users
+
+    def get(self, request, *args, **kwargs):
+        try:
+            book = Book.objects.get(pk=kwargs['pk'])
+        except Book.DoesNotExist:
+            return Response({"detail": "Book not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = BookSerializer(book)
+        return Response(serializer.data)
+
+
+# View to create a new book (requires authentication)
+class BookCreateView(APIView):
+    permission_classes = [IsAuthenticated]  # Requires authentication
+
+    def post(self, request, *args, **kwargs):
+        serializer = BookSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# View to update an existing book (requires authentication)
 class BookUpdateView(APIView):
-    """
-    Update an existing book based on the request body.
-    """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]  # Requires authentication
 
     def put(self, request, *args, **kwargs):
         book_id = request.data.get('id')  # Get the book ID from the request data
@@ -45,7 +55,6 @@ class BookUpdateView(APIView):
         except Book.DoesNotExist:
             return Response({"detail": "Book not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Serialize and update the book
         serializer = BookSerializer(book, data=request.data, partial=True)  # partial=True allows partial updates
         if serializer.is_valid():
             serializer.save()
@@ -53,11 +62,9 @@ class BookUpdateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# View to delete a book (requires authentication)
 class BookDeleteView(APIView):
-    """
-    Delete a book based on the request body.
-    """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]  # Requires authentication
 
     def delete(self, request, *args, **kwargs):
         book_id = request.data.get('id')  # Get the book ID from the request data
