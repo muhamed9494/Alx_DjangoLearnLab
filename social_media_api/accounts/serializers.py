@@ -5,8 +5,8 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
-    token = serializers.CharField(read_only=True)  # Create the token field
-    password = serializers.CharField(write_only=True)  # Create the password field for write access
+    token = serializers.CharField(read_only=True)  # This creates the token field
+    password = serializers.CharField(write_only=True)  # This creates the password field for write access
 
     class Meta:
         model = User
@@ -15,6 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
             'password': {'write_only': True}  # Ensure password is write-only
         }
 
+    # Method to create a user with the specified data and generate a token
     def create(self, validated_data):
         user = get_user_model().objects.create_user(
             username=validated_data['username'],
@@ -23,5 +24,5 @@ class UserSerializer(serializers.ModelSerializer):
             bio=validated_data.get('bio', ''),
         )
         token = Token.objects.create(user=user)  # Create a token for the user
-        validated_data['token'] = token.key  # Include the token key in the validated data
+        validated_data['token'] = token.key  # Add the token key to the validated data
         return validated_data
