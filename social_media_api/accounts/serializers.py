@@ -6,6 +6,7 @@ User = get_user_model()
 
 # Create a CharField explicitly for serializer use
 password_field = serializers.CharField(write_only=True)
+serializers.CharField()
 
 class UserSerializer(serializers.ModelSerializer):
     token = serializers.CharField(read_only=True)  # This creates the token field
