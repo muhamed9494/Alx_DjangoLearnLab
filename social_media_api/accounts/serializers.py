@@ -4,9 +4,12 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+# Create a CharField explicitly for serializer use
+password_field = serializers.CharField(write_only=True)
+
 class UserSerializer(serializers.ModelSerializer):
     token = serializers.CharField(read_only=True)  # This creates the token field
-    password = serializers.CharField(write_only=True)  # This creates the password field for write access
+    password = password_field  # Create the password field for write access
 
     class Meta:
         model = User
