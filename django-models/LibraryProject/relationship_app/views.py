@@ -21,7 +21,7 @@ class LibraryDetailView(DetailView):
     context_object_name = 'library'    
 
 
-class SignUpView(CreateView):
+class register(CreateView):
     form_class = UserCreationForm
     success_url = reverse_lazy('login')  # Redirect to login after successful registration
     template_name = 'registration/register.html'
