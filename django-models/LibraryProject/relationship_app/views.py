@@ -21,8 +21,14 @@ class LibraryDetailView(DetailView):
     context_object_name = 'library'    
 
 
-class register(CreateView):
-    form_class = UserCreationForm
-    success_url = reverse_lazy('login')  # Redirect to login after successful registration
-    template_name = 'registration/register.html'
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)  # Using UserCreationForm
+        if form.is_valid():
+            form.save()  # Save the new user
+            return redirect('login')  # Redirect to login after successful registration
+    else:
+        form = UserCreationForm()  # Show empty form for GET requests
+    
+    return render(request, 'register.html', {'form': form}
 
