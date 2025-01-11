@@ -27,15 +27,6 @@ class SignUpView(CreateView):
     success_url = reverse_lazy('login')  # Redirect to login after successful registration
     template_name = 'registration/register.html'
 
-# Role-checking functions
-def is_admin(user):
-    return user.is_authenticated and hasattr(user, 'profile') and user.profile.role == 'Admin'
-
-def is_librarian(user):
-    return user.is_authenticated and hasattr(user, 'profile') and user.profile.role == 'Librarian'
-
-def is_member(user):
-    return user.is_authenticated and hasattr(user, 'profile') and user.profile.role == 'Member'
 
 # Views for each role
 @login_required
@@ -52,5 +43,15 @@ def librarian_view(request):
 @user_passes_test(is_member, login_url='/login/')
 def member_view(request):
     return render(request, 'roles/member_view.html', {'message': 'Welcome, Member!'})
+
+# Role-checking functions
+def is_admin(user):
+    return user.is_authenticated and hasattr(user, 'profile') and user.profile.role == 'Admin'
+
+def is_librarian(user):
+    return user.is_authenticated and hasattr(user, 'profile') and user.profile.role == 'Librarian'
+
+def is_member(user):
+    return user.is_authenticated and hasattr(user, 'profile') and user.profile.role == 'Member'
 
 
