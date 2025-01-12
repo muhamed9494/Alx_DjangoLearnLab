@@ -1,173 +1,99 @@
-Authentication System Documentation for Django Blog Project
-Overview of Authentication System
-The authentication system for the Django blog project allows users to register, log in, log out, and manage their profiles. It provides a secure mechanism for ensuring that only authenticated users can access certain parts of the application and make changes to their profiles. This system leverages Django’s built-in authentication views and forms, with custom modifications to meet the project’s requirements.
+# Blog Application Documentation
 
-Features:
-User Registration: Allows users to create an account with a username, email, and password.
-User Login: Allows users to log in using their credentials.
-User Logout: Logs users out and redirects them to the login page.
-Profile Management: Enables authenticated users to view and update their profile information, including their username and email.
-System Components
-1. Views
-Django provides built-in views for user login and logout. Custom views are implemented for user registration and profile management.
+This document outlines the CRUD operations for posts and the permissions and security aspects associated with them.
 
-Login View: Uses Django's LoginView to authenticate users.
-Logout View: Uses Django's LogoutView to log users out and redirect them to the login page.
-Registration View: A custom view that uses a form to handle user registration and creates a new user.
-Profile View: A custom view that allows users to view and edit their profile information.
-2. Forms
-Two custom forms are used:
+## CRUD Operations for Posts
 
-CustomUserCreationForm: Extends UserCreationForm to include an email field during registration.
-ProfileForm: Allows users to edit their profile, such as their username and email.
-3. Templates
-There are several templates involved in the authentication system:
+### 1. **Create a Post**
+To create a new post, a user must be logged in. A user can create a post by filling out the form with a title and content. The post will be saved with the logged-in user as the author.
 
-Login Template: Displays the login form.
-Registration Template: Displays the user registration form.
-Profile Template: Allows users to view and update their profile information.
-4. URL Patterns
-The URL patterns for authentication views are configured in the urls.py of the blog app, and they are included in the main project’s URL configuration to route requests to the appropriate views.
+- **Endpoint**: `/posts/new/`
+- **Method**: `POST`
+- **Fields**:
+  - `title`: The title of the post.
+  - `content`: The content of the post.
+  
+**Permissions**: 
+- Only authenticated users can create a post.
+- The author of the post is automatically set to the logged-in user.
 
-/login/ – Login page.
-/logout/ – Logout action.
-/register/ – User registration page.
-/profile/ – Profile management page.
-Setting Up the Authentication System
-1. Install Django
-If you haven't already installed Django, you can do so with the following command:
+### 2. **Read a Post**
+To read a post, users can view the details of a single post. The post is displayed with the title, content, and author information.
 
-bash
-Copy code
-pip install django
-2. Create Django Project and App
-Create a new Django project and an app for the blog:
+- **Endpoint**: `/posts/<int:pk>/`
+- **Method**: `GET`
+- **URL Parameter**:
+  - `pk`: The ID of the post to display.
 
-bash
-Copy code
-django-admin startproject django_blog
-cd django_blog
-python manage.py startapp blog
-3. Define Models and Forms
-Create custom forms in the blog/forms.py file:
+**Permissions**:
+- This operation is publicly accessible, meaning anyone can read a post, regardless of whether they are logged in.
 
-CustomUserCreationForm (for user registration).
-ProfileForm (for profile management).
-4. Create Views for Authentication
-Define views in blog/views.py for handling registration, login, logout, and profile management. For registration and profile management, use custom views. For login and logout, you can use Django’s built-in views.
+### 3. **Update a Post**
+To update an existing post, the logged-in user can modify the title or content of the post. Only the author of the post can update it.
 
-python
-Copy code
-# blog/views.py
-from django.contrib.auth.views import LoginView, LogoutView
-from django.shortcuts import render, redirect
-from django.contrib.auth import login
-from .forms import CustomUserCreationForm, ProfileForm
-from django.contrib.auth.models import User
+- **Endpoint**: `/posts/<int:pk>/edit/`
+- **Method**: `POST`
+- **Fields**:
+  - `title`: The new title of the post.
+  - `content`: The new content of the post.
+  
+**Permissions**:
+- Only the author of the post can update the post.
+- If the user is not the author, they will be redirected and denied access.
 
-def register(request):
-    if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('profile')
-    else:
-        form = CustomUserCreationForm()
-    return render(request, 'blog/register.html', {'form': form})
+### 4. **Delete a Post**
+To delete a post, the user must be the author of the post. Once deleted, the post will no longer be available.
 
-def profile(request):
-    if request.method == 'POST':
-        form = ProfileForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            return redirect('profile')
-    else:
-        form = ProfileForm(instance=request.user)
-    return render(request, 'blog/profile.html', {'form': form})
+- **Endpoint**: `/posts/<int:pk>/delete/`
+- **Method**: `POST` (typically a `POST` for confirmation)
+- **URL Parameter**:
+  - `pk`: The ID of the post to delete.
 
-# Other views for login and logout will use Django's built-in views.
-5. Configure URL Patterns
-In blog/urls.py, define the URL patterns for login, logout, registration, and profile:
+**Permissions**:
+- Only the author of the post can delete it.
+- If the user is not the author, they will be redirected and denied access.
 
-python
-Copy code
-# blog/urls.py
-from django.urls import path
-from . import views
+## Permissions and Security Aspects
 
-urlpatterns = [
-    path('login/', LoginView.as_view(), name='login'),
-    path('logout/', LogoutView.as_view(), name='logout'),
-    path('register/', views.register, name='register'),
-    path('profile/', views.profile, name='profile'),
-]
-In the main urls.py file of your project, include the blog.urls:
+### Authentication and Authorization
+- **Authentication**: Users must be logged in to perform CRUD operations (except reading posts). The `LoginRequiredMixin` is used to enforce authentication on `Create`, `Update`, and `Delete` views.
+  
+- **Authorization**:
+  - **Create**: Any logged-in user can create a post. The author is automatically set to the logged-in user.
+  - **Update**: Only the author of the post can update it. This is enforced by checking whether the logged-in user is the author of the post in the `PostUpdateView`.
+  - **Delete**: Only the author of the post can delete it. This is enforced by checking whether the logged-in user is the author of the post in the `PostDeleteView`.
+  
+  Both `Update` and `Delete` actions use the `UserPassesTestMixin` to ensure that the current user is authorized to perform the action on the post.
 
-python
-Copy code
-# django_blog/urls.py
-from django.contrib import admin
-from django.urls import path, include
+### CSRF Protection
+- Django's built-in CSRF protection is enabled by default for all forms. This ensures that any form submission is secure and prevents Cross-Site Request Forgery (CSRF) attacks.
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('blog/', include('blog.urls')),
-]
-6. Create Templates
-Create HTML templates for login, registration, and profile management:
+### Access Control
+- **Post Update and Delete Views**: These views use `UserPassesTestMixin` to restrict access to the owner of the post. If an unauthorized user attempts to access these views, they will be redirected to a different page.
 
-login.html
-register.html
-profile.html
-These templates should include forms and handle success or error messages.
+```python
+class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Post
+    template_name = 'blog/post_form.html'
+    fields = ['title', 'content']
 
-Example of register.html:
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
 
-html
-Copy code
-<!-- blog/templates/blog/register.html -->
-<form method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Register</button>
-</form>
-7. Enable CSRF Protection
-Ensure that {% csrf_token %} is included inside your forms to protect against Cross-Site Request Forgery (CSRF) attacks.
+    def test_func(self):
+        post = self.get_object()
+        return post.author == self.request.user
 
-User Guide
-User Registration
-Visit the /register/ URL to create a new account.
-Fill in the username, email, and password fields in the registration form.
-After submission, the user will be logged in automatically and redirected to their profile page.
-User Login
-Visit the /login/ URL to log in to the application.
-Enter your username and password in the login form.
-If the credentials are correct, you will be logged in and redirected to your profile page.
-User Logout
-To log out, simply visit the /logout/ URL.
-You will be logged out, and redirected to the login page.
-Profile Management
-Once logged in, visit the /profile/ URL to view and edit your profile.
-You can update your email and username (or other fields, depending on your form).
-Submit the changes, and your profile will be updated.
-Security Features
-Password Hashing
-Django uses its built-in password hashing mechanism to securely store passwords. Passwords are never stored in plain text in the database. Instead, they are hashed using a secure algorithm, ensuring that they are protected.
+How to Use
+Run the server: python manage.py runserver
+Access the application: Visit http://127.0.0.1:8000/ in your browser.
+Create a new post: Visit /posts/new/, fill out the form, and submit.
+Update a post: Navigate to the post detail page, and click the "Edit" button.
+Delete a post: Navigate to the post detail page, and click the "Delete" button.
+Ensure that you are logged in to perform the update or delete actions. Non-authenticated users will be redirected to the login page.
 
-CSRF Protection
-Django’s CSRF protection helps prevent Cross-Site Request Forgery attacks by requiring a special token ({% csrf_token %}) in every form that submits data via POST requests.
 
-Testing the Authentication System
-1. Testing Registration
-Go to the registration page /register/.
-Create a new user account by filling in the form.
-Verify that the user is created and logged in automatically.
-2. Testing Login
-Go to the login page /login/.
-Enter valid credentials and verify successful login.
-Try invalid credentials to ensure the error is handled correctly.
-3. Testing Profile Management
-After logging in, go to the /profile/ page.
-Edit the profile (e.g., change the email address).
-Verify that the changes are saved and reflected after submitting the form.
+This documentation explains the CRUD operations for posts and the security measures in place to ensure only authorized users can perform certain actions.
+
+
