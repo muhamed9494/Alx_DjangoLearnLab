@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.db.models import CASCADE
+from django.utils import timezone
 
 
 class Post(models.Model):
@@ -28,3 +30,16 @@ class Profile(models.Model):
 def create_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
+
+
+class Comment(models.Model):
+    post = models.ForeignKey('Post', on_delete=CASCADE, related_name='comments')
+    author = models.ForeignKey(User, on_delete=CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"Comment by {self.author.username} on {self.post.title}"
+
+        

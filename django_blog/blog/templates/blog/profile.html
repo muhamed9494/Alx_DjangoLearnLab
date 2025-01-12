@@ -1,8 +1,20 @@
 {% extends "blog/base.html" %}
+
 {% block title %}Profile{% endblock %}
+
 {% block content %}
-<h2>Your Profile</h2>
-<p>Username: {{ user.username }}</p>
-<p>Email: {{ user.email }}</p>
-<a href="{% url 'profile' %}">Edit Profile</a>
+<h2>{{ profile.user.username }}'s Profile</h2>
+
+<p><strong>Bio:</strong> {{ profile.bio }}</p>
+
+{% if profile.profile_picture %}
+    <img src="{{ profile.profile_picture.url }}" alt="Profile Picture">
+{% else %}
+    <p>No profile picture uploaded.</p>
+{% endif %}
+
+<h3>Your Posts</h3>
+<!-- Link to the user's posts -->
+<a href="{% url 'post-list' %}" class="btn">View Your Posts</a>
+
 {% endblock %}
