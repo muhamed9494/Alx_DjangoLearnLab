@@ -5,11 +5,6 @@
 <p>{{ post.content }}</p>
 <p>By {{ post.author }} on {{ post.created_at }}</p>
 
-{% if post.author == user %}
-    <!-- Link to the PostDeleteView for deleting the post -->
-    <a href="{% url 'post-delete' post.pk %}" onclick="return confirm('Are you sure you want to delete this post?');">Delete Post</a>
-{% endif %}
-
 <h3>Comments</h3>
 {% for comment in comments %}
     <div class="comment">
@@ -27,7 +22,7 @@
 
 {% if user.is_authenticated %}
     <h4>Add a Comment</h4>
-    <form method="post">
+    <form method="post" action="{% url 'add-comment' post.pk %}">
         {% csrf_token %}
         {{ comment_form.as_p }}
         <button type="submit">Post Comment</button>
