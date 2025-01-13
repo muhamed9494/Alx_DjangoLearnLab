@@ -28,25 +28,27 @@ class SignUpView(CreateView):
     success_url = reverse_lazy('login')  # Redirect to login after successful registration
     template_name = 'registration/register.html'
 
-# Admin View (access for Admin users only)
+def is_admin(user):
+    return user.userprofile.role == 'Admin'
+
+@user_passes_test(is_admin)
 def admin_view(request):
-    # Check if the user has the 'Admin' role
-    if request.user.role != 'Admin':
-        return HttpResponseForbidden("You are not authorized to view this page.")
     return render(request, 'admin_view.html')
 
-# Librarian View (access for Librarian users only)
+
+def is_librarian(user):
+    return user.userprofile.role == 'Librarian'
+
+@user_passes_test(is_librarian)
 def librarian_view(request):
-    # Check if the user has the 'Librarian' role
-    if request.user.role != 'Librarian':
-        return HttpResponseForbidden("You are not authorized to view this page.")
     return render(request, 'librarian_view.html')
 
-# Member View (access for Member users only)
+
+def is_member(user):
+    return user.userprofile.role == 'Member'
+
+@user_passes_test(is_member)
 def member_view(request):
-    # Check if the user has the 'Member' role
-    if request.user.role != 'Member':
-        return HttpResponseForbidden("You are not authorized to view this page.")
-    return render(request, 'member_view.html'))
+    return render(request, 'member_view.html')
 
 
