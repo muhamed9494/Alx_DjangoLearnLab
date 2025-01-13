@@ -29,17 +29,14 @@ class SignUpView(CreateView):
     template_name = 'registration/register.html'
 
 # Admin View (access for Admin users only)
-@user_passes_test(lambda user: user.role == 'Admin')
 def admin_view(request):
     return render(request, 'admin_view.html')
 
 # Librarian View (access for Librarian users only)
-@user_passes_test(lambda user: user.role == 'Librarian')
 def librarian_view(request):
     return render(request, 'librarian_view.html')
 
 # Member View (access for Member users only)
-@user_passes_test(lambda user: user.role == 'Member')
 def member_view(request):
     return render(request, 'member_view.html')
 
