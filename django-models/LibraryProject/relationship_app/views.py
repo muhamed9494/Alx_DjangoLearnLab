@@ -8,6 +8,8 @@ from django.contrib.auth.views import LogoutView
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.contrib.auth.decorators import user_passes_test
+from django.views.generic import TemplateView
+
 
 
 
@@ -26,26 +28,28 @@ class SignUpView(CreateView):
     success_url = reverse_lazy('login')  # Redirect to login after successful registration
     template_name = 'registration/register.html'
 
-# Helper functions to check roles
-def is_admin(user):
-    return user.is_authenticated and user.profile.role == 'Admin'
+# Admin View (access for Admin users only)
+class AdminView(TemplateView):
+    template_name = 'admin_view.html'
 
-def is_librarian(user):
-    return user.is_authenticated and user.profile.role == 'Librarian'
+    @user_passes_test(lambda user: user.role == 'Admin')
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
-def is_member(user):
-    return user.is_authenticated and user.profile.role == 'Member'
-    
-@user_passes_test(is_admin)
-def admin_view(request):
-    return render(request, 'admin_view.html', {'message': 'Welcome, Admin!'})
+# Librarian View (access for Librarian users only)
+class LibrarianView(TemplateView):
+    template_name = 'librarian_view.html'
 
-@user_passes_test(is_librarian)
-def librarian_view(request):
-    return render(request, 'librarian_view.html', {'message': 'Welcome, Librarian!'})
+    @user_passes_test(lambda user: user.role == 'Librarian')
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
-@user_passes_test(is_member)
-def member_view(request):
-    return render(request, 'member_view.html', {'message': 'Welcome, Member!'})
+# Member View (access for Member users only)
+class MemberView(TemplateView):
+    template_name = 'member_view.html'
+
+    @user_passes_test(lambda user: user.role == 'Member')
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
 
