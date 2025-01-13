@@ -29,27 +29,18 @@ class SignUpView(CreateView):
     template_name = 'registration/register.html'
 
 # Admin View (access for Admin users only)
-class admin_view(TemplateView):
-    template_name = 'admin_view.html'
-
-    @user_passes_test(lambda user: user.role == 'Admin')
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
+@user_passes_test(lambda user: user.role == 'Admin')
+def admin_view(request):
+    return render(request, 'admin_view.html')
 
 # Librarian View (access for Librarian users only)
-class librarian_view(TemplateView):
-    template_name = 'librarian_view.html'
-
-    @user_passes_test(lambda user: user.role == 'Librarian')
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
+@user_passes_test(lambda user: user.role == 'Librarian')
+def librarian_view(request):
+    return render(request, 'librarian_view.html')
 
 # Member View (access for Member users only)
-class member_view(TemplateView):
-    template_name = 'member_view.html'
-
-    @user_passes_test(lambda user: user.role == 'Member')
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
+@user_passes_test(lambda user: user.role == 'Member')
+def member_view(request):
+    return render(request, 'member_view.html')
 
 
