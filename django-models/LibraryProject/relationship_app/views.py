@@ -1,14 +1,11 @@
 from django.shortcuts import render
-from .models import Book
-from .models import Library
+from .models import Book, Library
 from django.views.generic.detail import DetailView
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.views import LoginView
-from django.contrib.auth.views import LogoutView
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.contrib.auth.decorators import user_passes_test
-from django.views.generic import TemplateView
+from django.http import HttpResponseForbidden
 
 
 
@@ -20,41 +17,29 @@ def list_books(request):
 class LibraryDetailView(DetailView):
     model = Library
     template_name = 'relationship_app/library_detail.html'
-    context_object_name = 'library'    
-
+    context_object_name = 'library'
 
 class SignUpView(CreateView):
     form_class = UserCreationForm
-    success_url = reverse_lazy('login')  # Redirect to login after successful registration
-    template_name = 'registration/register.html'
+    success_url = reverse_lazy('login')
+    template_name = 'relationship_app/register.html'
 
+    
+def check_role(role):
+    def decorator(user):
+        return user.is_authenticated and user.profile.role == role
+    return decorator
 
-
-@user_passes_test(is_admin)
+@user_passes_test(check_role('Admin'), login_url='/accounts/login/')
 def admin_view(request):
-    return render(request, 'admin_view.html')
+    return render(request, 'relationship_app/admin_view.html', {'role': 'Admin'})
 
-def is_admin(user):
-    return user.userprofile.role == 'Admin'
-
-
-
-@user_passes_test(is_librarian)
+@user_passes_test(check_role('Librarian'), login_url='/accounts/login/')
 def librarian_view(request):
-    return render(request, 'librarian_view.html')
+    return render(request, 'relationship_app/librarian_view.html', {'role': 'Librarian'})
 
-def is_librarian(user):
-    return user.userprofile.role == 'Librarian'
-
-
-
-
-
-@user_passes_test(is_member)
+@user_passes_test(check_role('Member'), login_url='/accounts/login/')
 def member_view(request):
-    return render(request, 'member_view.html')
-
-def is_member(user):
-    return user.userprofile.role == 'Member'
+    return render(request, 'relationship_app/member_view.html', {'role': 'Member'})
 
 
