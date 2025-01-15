@@ -17,6 +17,13 @@ class Book(models.Model):
     def __str__(self):
         return self.title
 
+    class Meta:
+        permissions = [
+            ("can_add_custom_book", "Can add custom book"),
+            ("can_change_custom_book", "Can change custom book"),
+            ("can_delete_custom_book", "Can delete custom book"),
+        ]    
+
 class Library(models.Model):
     name = models.CharField(max_length=200)
     books = models.ManyToManyField(Book)
@@ -53,4 +60,3 @@ def create_user_profile(sender, instance, created, **kwargs):
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
 
-        
