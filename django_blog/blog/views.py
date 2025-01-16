@@ -14,6 +14,7 @@ from .forms import CommentForm
 from django.contrib.auth.decorators import login_required
 from .forms import SearchForm
 from django.db.models import Q
+from taggit.models import Tag
 
 
 
@@ -178,9 +179,15 @@ def search_posts(request):
     })
 
 
-def posts_by_tag(request, tag_name):
-    posts = Post.objects.filter(tags__name__in=[tag_name])
-    return render(request, 'blog/posts_by_tag.html', {'tag_name': tag_name, 'posts': posts})
+class PostByTagListView(ListView):
+    model = Post
+    template_name = 'blog/post_list_by_tag.html'  # Create this template
+    context_object_name = 'posts'
+
+    def get_queryset(self):
+        tag_slug = self.kwargs.get('tag_slug')  # Get the slug from URL
+        tag = Tag.objects.get(slug=tag_slug)  # Get the tag object
+        return Post.objects.filter(tags=tag)  # Filter posts by tag
 
 def search(request):
     query = request.GET.get('q', '')  # Get the search query from the request
