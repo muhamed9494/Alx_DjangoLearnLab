@@ -1,6 +1,7 @@
 from django import forms
 from .models import Post, Comment, Tag
 from taggit.forms import TagField, TagWidget
+from django.forms import widgets
 
 
 class PostForm(forms.ModelForm):
