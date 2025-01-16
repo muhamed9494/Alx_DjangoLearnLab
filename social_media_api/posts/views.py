@@ -2,7 +2,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .models import Post, Comment
 from .serializers import PostSerializer, CommentSerializer
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import permissions.IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
@@ -43,14 +43,16 @@ class FeedViewSet(viewsets.ViewSet):
 
 @api_view(['POST'])
 def like_post(request, pk):
-    """Handle liking a post."""
+    """Handle liking a post using get_or_create."""
     post = get_object_or_404(Post, pk=pk)
-    if Like.objects.filter(user=request.user, post=post).exists():
+
+    # Use get_or_create to handle liking a post
+    like, created = Like.objects.get_or_create(user=request.user, post=post)
+
+    if not created:
         return Response({"detail": "You already liked this post."}, status=status.HTTP_400_BAD_REQUEST)
     
-    like = Like.objects.create(user=request.user, post=post)
-    
-    # Create a notification
+    # Create a notification for the post owner
     notification = Notification.objects.create(
         recipient=post.user,  # Notify the post owner
         actor=request.user,
@@ -59,7 +61,7 @@ def like_post(request, pk):
         target_content_type=ContentType.objects.get_for_model(Post),
         target_object_id=post.id
     )
-    
+
     return Response({"detail": "Post liked successfully!"}, status=status.HTTP_201_CREATED)
 
 
@@ -67,13 +69,15 @@ def like_post(request, pk):
 def unlike_post(request, pk):
     """Handle unliking a post."""
     post = get_object_or_404(Post, pk=pk)
+
+    # Try to get the like object
     like = Like.objects.filter(user=request.user, post=post).first()
-    
+
     if not like:
         return Response({"detail": "You have not liked this post."}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     like.delete()
-    
+
     return Response({"detail": "Post unliked successfully!"}, status=status.HTTP_200_OK)
 
         
