@@ -10,8 +10,10 @@ from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
 from .models import CustomUser
 from rest_framework import generics
-from rest_framework import permissions.IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from .serializers import CustomUserSerializer
+from notifications.models import Notification
+from django.contrib.contenttypes.models import ContentType
 
 # Follow User - Ensures user is authenticated and adds the follow relationship
 class FollowUserView(generics.GenericAPIView):
@@ -73,6 +75,27 @@ class LoginView(APIView):
             return Response({'token': token.key, 'user_id': user.id})
         return Response({'error': 'Invalid credentials'}, status=400)
 
+@api_view(['POST'])
+def follow_user(request, user_id):
+    """Handle following a user."""
+    user_to_follow = get_object_or_404(CustomUser, id=user_id)
+    
+    if user_to_follow == request.user:
+        return Response({"detail": "You cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+    
+    request.user.following.add(user_to_follow)
+    
+    # Create a notification for the new follower
+    notification = Notification.objects.create(
+        recipient=user_to_follow,
+        actor=request.user,
+        verb="started following you",
+        target=user_to_follow,
+        target_content_type=ContentType.objects.get_for_model(CustomUser),
+        target_object_id=user_to_follow.id
+    )
+    
+    return Response({"detail": f"Now following {user_to_follow.username}"}, status=status.HTTP_200_OK)
 
 
 
