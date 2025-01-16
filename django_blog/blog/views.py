@@ -13,6 +13,8 @@ from .models import Post, Comment
 from .forms import CommentForm
 from django.contrib.auth.decorators import login_required
 from .forms import SearchForm
+from django.db.models import Q
+
 
 
 
@@ -179,6 +181,16 @@ def search_posts(request):
 def posts_by_tag(request, tag_name):
     posts = Post.objects.filter(tags__name__in=[tag_name])
     return render(request, 'blog/posts_by_tag.html', {'tag_name': tag_name, 'posts': posts})
+
+def search(request):
+    query = request.GET.get('q', '')  # Get the search query from the request
+
+    # Filter posts by tag name (case-insensitive) or content (case-insensitive)
+    posts = Post.objects.filter(
+        Q(tags__name__icontains=query) | Q(content__icontains=query)
+    )
+
+    return render(request, 'blog/search_results.html', {'posts': posts, 'query': query})
     
 
 
