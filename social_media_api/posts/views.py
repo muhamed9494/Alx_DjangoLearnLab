@@ -44,7 +44,7 @@ class FeedViewSet(viewsets.ViewSet):
 @api_view(['POST'])
 def like_post(request, pk):
     """Handle liking a post using get_or_create."""
-    post = get_object_or_404(Post, pk=pk)
+    post = generics.get_object_or_404(Post, pk=pk)
 
     # Use get_or_create to handle liking a post
     like, created = Like.objects.get_or_create(user=request.user, post=post)
@@ -68,7 +68,7 @@ def like_post(request, pk):
 @api_view(['POST'])
 def unlike_post(request, pk):
     """Handle unliking a post."""
-    post = get_object_or_404(Post, pk=pk)
+    post = generics.get_object_or_404(Post, pk=pk)
 
     # Try to get the like object
     like = Like.objects.filter(user=request.user, post=post).first()
