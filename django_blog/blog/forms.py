@@ -4,10 +4,7 @@ from taggit.forms import TagField, TagWidget
 
 
 class PostForm(forms.ModelForm):
-    tags = forms.ModelMultipleChoiceField(
-        queryset=Tag.objects.all(),
-        widget=forms.CheckboxSelectMultiple,
-        required=False
+    tags = TagField(widget=TagWidget())
     )
     class Meta:
         model = Post
