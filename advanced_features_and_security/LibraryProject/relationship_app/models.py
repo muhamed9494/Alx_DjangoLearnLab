@@ -2,36 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.models import BaseUserManager
-from django.conf import settings
-
-
-class CustomUserManager(BaseUserManager):
-    def create_user(self, username, password=None, date_of_birth=None, profile_photo=None, **extra_fields):
-        if not username:
-            raise ValueError('The Username field must be set')
-        user = self.model(username=username, date_of_birth=date_of_birth, profile_photo=profile_photo, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_superuser(self, username, password=None, date_of_birth=None, profile_photo=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-
-        return self.create_user(username, password, date_of_birth, profile_photo, **extra_fields)
-        
-
-class CustomUser(AbstractUser):
-    date_of_birth = models.DateField(null=True, blank=True)
-    profile_photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True)
-    
-    objects = CustomUserManager()
-
-    def __str__(self):
-        return self.username
-
+from django.conf import settings 
 
 
 class Author(models.Model):
@@ -68,7 +39,6 @@ class Librarian(models.Model):
     def __str__(self):
         return self.name
 
-# Updated UserProfile model to use the custom user model
 class UserProfile(models.Model):
     ROLE_CHOICES = [
         ('Admin', 'Admin'),
@@ -76,18 +46,18 @@ class UserProfile(models.Model):
         ('Member', 'Member'),
     ]
 
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='profile')  # Updated reference
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     role = models.CharField(max_length=50, choices=ROLE_CHOICES, default='Member')
 
     def __str__(self):
         return f"{self.user.username} - {self.role}"
 
-# Signal handlers for UserProfile creation and saving
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)  # Updated reference
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
 
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)  # Updated reference
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
+
