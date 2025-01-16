@@ -12,6 +12,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import Post, Comment
 from .forms import CommentForm
 from django.contrib.auth.decorators import login_required
+from .forms import SearchForm
+
 
 
 
@@ -158,6 +160,26 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse_lazy('post-detail', kwargs={'pk': self.kwargs['post_pk']})
 
+def search_posts(request):
+    form = SearchForm(request.GET)
+    query = None
+    results = []
+    
+    if form.is_valid():
+        query = form.cleaned_data['query']
+        results = Post.objects.filter(title__icontains=query)
+    
+    return render(request, 'blog/search_results.html', {
+        'form': form,
+        'query': query,
+        'results': results,
+    })
+
+
+def posts_by_tag(request, tag_name):
+    posts = Post.objects.filter(tags__name__in=[tag_name])
+    return render(request, 'blog/posts_by_tag.html', {'tag_name': tag_name, 'posts': posts})
+    
 
 
 
