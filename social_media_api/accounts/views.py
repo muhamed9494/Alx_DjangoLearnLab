@@ -9,6 +9,9 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
 from .models import CustomUser
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from .serializers import CustomUserSerializer
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -34,17 +37,40 @@ class LoginView(APIView):
         return Response({'error': 'Invalid credentials'}, status=400)
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def follow_user(request, user_id):
-    user_to_follow = get_object_or_404(CustomUser, id=user_id)
-    request.user.following.add(user_to_follow)
-    return Response({"message": "Followed successfully!"}, status=status.HTTP_200_OK)
+# Follow User - Ensures user is authenticated and adds the follow relationship
+class FollowUserView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
 
-@api_view(['POST'])
-def unfollow_user(request, user_id):
-    user_to_unfollow = get_object_or_404(CustomUser, id=user_id)
-    request.user.following.remove(user_to_unfollow)
-    return Response({"message": "Unfollowed successfully!"}, status=status.HTTP_200_OK)
+    def post(self, request, user_id):
+        # Get the user to follow
+        user_to_follow = get_object_or_404(CustomUser, id=user_id)
+        
+        # Add the following relationship (one-way)
+        request.user.following.add(user_to_follow)
+        
+        return Response({"message": f"User {user_to_follow.username} followed successfully!"})
+
+# Unfollow User - Ensures user is authenticated and removes the follow relationship
+class UnfollowUserView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        # Get the user to unfollow
+        user_to_unfollow = get_object_or_404(CustomUser, id=user_id)
+        
+        # Remove the following relationship
+        request.user.following.remove(user_to_unfollow)
+        
+        return Response({"message": f"User {user_to_unfollow.username} unfollowed successfully!"})
+
+# List all users - This view lists all users (optional, for demonstration or admin use)
+class ListUsersView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        users = CustomUser.objects.all()
+        # Serialize the user data (this will depend on your CustomUser serializer)
+        serializer = CustomUserSerializer(users, many=True)
+        return Response(serializer.data)
 
 
