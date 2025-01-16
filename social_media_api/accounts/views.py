@@ -10,7 +10,7 @@ from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
 from .models import CustomUser
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import permissions.IsAuthenticated
 from .serializers import CustomUserSerializer
 
 # Follow User - Ensures user is authenticated and adds the follow relationship
