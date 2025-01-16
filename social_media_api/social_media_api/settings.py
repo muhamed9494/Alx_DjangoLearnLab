@@ -23,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-1*fc+-agr#%30=btp&a240aog4r&5n1v!@n34agw$n4e#9ig%g'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -80,8 +80,12 @@ WSGI_APPLICATION = 'social_media_api.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',  
+        'NAME': 'try_zema',                
+        'USER': 'root',                
+        'PASSWORD': '159_753-Mo@fZ',        
+        'HOST': 'localhost',                   
+        'PORT': '3306',                        
     }
 }
 
@@ -134,3 +138,14 @@ REST_FRAMEWORK = {
 }
 
 
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_SSL_REDIRECT = True  # To force HTTPS
+
+import os
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+
+AWS_STORAGE_BUCKET_NAME = 'social-media-api'
+AWS_ACCESS_KEY_ID = 'AKIAIOSFODNN7IHRTHB'
+AWS_SECRET_ACCESS_KEY = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYJijLrtGTvpQ'
